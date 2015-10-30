@@ -2,10 +2,10 @@ SHELL := /bin/bash
 
 export GOPATH := $(PWD)
 
-all: true.in
+all: true.in bin/newtrue
 	bin/newtrue
 
-bin/true: src/newtrue/main.go
+bin/newtrue: src/newtrue/main.go
 	go install newtrue
 
 true.in:
