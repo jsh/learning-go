@@ -13,6 +13,21 @@ const (
 )
 
 func main() {
+
+	hPtr := flag.Bool("help", false, "Help")
+	vPtr := flag.Bool("version", false, "Version")
+
+	flag.Parse()
+
+	args := make([]string, 2)
+
+	if hPtr == true {
+		args = append(args, "--help")
+	}
+	if vPtr == true {
+		args = append(args, "--version")
+	}
+
 	content, err := ioutil.ReadFile(inpath)
 	if err != nil {
 		os.Exit(1)
@@ -27,7 +42,7 @@ func main() {
 				os.Exit(1)
 			}
 
-			cmd := exec.Command(outpath)
+			cmd := exec.Command(outpath, args...)
 			content[byt] ^= (1 << bit)
 			if err = cmd.Run(); err != nil {
 				fmt.Printf("byte = %d, bit = %d\n", byt, bit)
