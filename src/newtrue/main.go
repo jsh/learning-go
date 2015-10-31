@@ -34,11 +34,13 @@ func main() {
 
 	content, err := ioutil.ReadFile(inpath)
 	if err != nil {
+		fmt.Println("cannot read file ", inpath)
 		os.Exit(1)
 	}
 
 	expect, err := ioutil.ReadFile(bmk)
 	if err != nil {
+		fmt.Println("cannot read file ", bmk)
 		os.Exit(1)
 	}
 
@@ -47,6 +49,7 @@ func main() {
 			content[nbyte] ^= (1 << nbit)
 
 			if err = ioutil.WriteFile(outpath, content, 0777); err != nil {
+				fmt.Println("cannot write file ", outpath)
 				os.Exit(1)
 			}
 
@@ -76,7 +79,19 @@ func main() {
 			case <-c1:
 
 			case <-time.After(time.Second * 1):
-				fmt.Printf("time-out-no-exit: %d.%d\n", nbyte, nbit)
+				{
+					fmt.Printf("time-out-no-exit: %d.%d\n", nbyte, nbit)
+					cmd2 := exec.Command("/usr/bin/killall", "true.out")
+					if err := cmd2.Run(); err != nil {
+						fmt.Println("cannot killall ", outpath, " : ", err)
+						os.Exit(1)
+					}
+					cmd2 = exec.Command("rm", "true.out")
+					if err := cmd2.Run(); err != nil {
+						fmt.Println("cannot remove ", outpath, " : ", err)
+						os.Exit(1)
+					}
+				}
 			}
 		}
 	}
