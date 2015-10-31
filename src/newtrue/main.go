@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -8,6 +10,7 @@ import (
 )
 
 const (
+	bmk     = "./bmk"
 	inpath  = "./true.in"
 	outpath = "./true.out"
 )
@@ -21,10 +24,10 @@ func main() {
 
 	args := make([]string, 2)
 
-	if hPtr == true {
+	if *hPtr == true {
 		args = append(args, "--help")
 	}
-	if vPtr == true {
+	if *vPtr == true {
 		args = append(args, "--version")
 	}
 
@@ -33,19 +36,35 @@ func main() {
 		os.Exit(1)
 	}
 
+	expect, err := ioutil.ReadFile(bmk)
+	if err != nil {
+		os.Exit(1)
+	}
 
-	for byt := range content {
-		for bit := uint32(0); bit < 8; bit++ {
-			content[byt] ^= (1 << bit)
+	for nbyte := range content {
+		for nbit := uint32(0); nbit < 8; nbit++ {
+			content[nbyte] ^= (1 << nbit)
 
 			if err = ioutil.WriteFile(outpath, content, 0777); err != nil {
 				os.Exit(1)
 			}
 
 			cmd := exec.Command(outpath, args...)
-			content[byt] ^= (1 << bit)
-			if err = cmd.Run(); err != nil {
-				fmt.Printf("byte = %d, bit = %d\n", byt, bit)
+			content[nbyte] ^= (1 << nbit)
+			out, err := cmd.CombinedOutput()
+			switch {
+			case (bytes.Compare(expect, out) != 0) && (err != nil):
+				{
+					fmt.Printf("bad-out-bad-exit: %d.%d\n", nbyte, nbit)
+				}
+			case (bytes.Compare(expect, out) != 0):
+				{
+					fmt.Printf("bad-out-good-exit: %d.%d\n", nbyte, nbit)
+				}
+			case err != nil:
+				{
+					fmt.Printf("good-out-bad-exit: %d.%d\n", nbyte, nbit)
+				}
 			}
 		}
 	}
