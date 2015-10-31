@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"time"
 )
 
 const (
@@ -51,20 +52,31 @@ func main() {
 
 			cmd := exec.Command(outpath, args...)
 			content[nbyte] ^= (1 << nbit)
-			out, err := cmd.CombinedOutput()
-			switch {
-			case (bytes.Compare(expect, out) != 0) && (err != nil):
-				{
-					fmt.Printf("bad-out-bad-exit: %d.%d\n", nbyte, nbit)
+			c1 := make(chan string, 1)
+			go func() {
+				out, err := cmd.CombinedOutput()
+				switch {
+				case (bytes.Compare(expect, out) != 0) && (err != nil):
+					{
+						fmt.Printf("bad-out-bad-exit: %d.%d\n", nbyte, nbit)
+					}
+				case (bytes.Compare(expect, out) != 0):
+					{
+						fmt.Printf("bad-out-good-exit: %d.%d\n", nbyte, nbit)
+					}
+				case err != nil:
+					{
+						fmt.Printf("good-out-bad-exit: %d.%d\n", nbyte, nbit)
+					}
 				}
-			case (bytes.Compare(expect, out) != 0):
-				{
-					fmt.Printf("bad-out-good-exit: %d.%d\n", nbyte, nbit)
-				}
-			case err != nil:
-				{
-					fmt.Printf("good-out-bad-exit: %d.%d\n", nbyte, nbit)
-				}
+				c1 <- "done" // dummy
+			}()
+
+			select {
+			case <-c1:
+
+			case <-time.After(time.Second * 1):
+				fmt.Printf("time-out-no-exit: %d.%d\n", nbyte, nbit)
 			}
 		}
 	}
