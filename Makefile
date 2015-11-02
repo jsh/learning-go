@@ -13,7 +13,7 @@ bin/newtrue: src/newtrue/main.go
 	go install newtrue
 
 clean:
-	rm *.OUT
+	rm *.OUT true.out
 
 helpflag: setup
 	./true.in --help > bmk
